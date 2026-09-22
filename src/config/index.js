@@ -5,11 +5,13 @@ module.exports = {
   },
   isDebug: process.env.IS_DEBUG || false,
   api: {
-    // Browser-facing base URL: always points at our Next.js proxy so the
-    // bad upstream TLS cert is terminated server-side. The real backend
-    // URL is configured via API_BASE_URL and consumed only by the proxy
-    // route at src/app/api/proxy/[[...path]]/route.js.
-    baseURL: '/api/proxy',
+    // The browser talks to the backend directly. Its certificate is valid and
+    // it answers with `Access-Control-Allow-Origin: *`, so the reverse proxy
+    // that used to terminate a bad upstream cert is no longer needed.
+    baseURL: (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://feham.itcuir.ir/').replace(
+      /\/$/,
+      ''
+    ),
     soketiUrl: process.env.NUXT_ENV_SOKETI_PUSHER_HOST,
     soketiPort: process.env.NUXT_ENV_SOKETI_PUSHER_PORT || 80,
     soketiAppKey: process.env.NUXT_ENV_SOKETI_PUSHER_APP_KEY,

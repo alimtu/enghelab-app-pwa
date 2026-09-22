@@ -5,8 +5,6 @@ import { useEffect } from 'react';
 import { UserCircleIcon, ImageIcon, LogInIcon } from 'lucide-react';
 import { Toaster } from "@/components/ui/sonner"
 import PWAProvider from './PWA/PWAProvider';
-import LocationPrompt from './LocationPrompt';
-import { useGeolocation } from '@/lib/hooks/useGeolocation';
 import useVersionData from '@/lib/hooks/useVersionData';
 import ThemeToggle from './AppComponents/ThemeToggle';
 import { SlidersHorizontalIcon } from 'lucide-react';
@@ -18,16 +16,10 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 export default function LayoutShell({ children }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { status, checking, requestPermission } = useGeolocation();
   const { data } = useVersionData();
   const { isAuthenticated, openLogin, ready: authReady } = useAuth();
 
   const isLoginPage = pathname === '/login';
-  const isLocationRequiredPage = pathname === '/location-required';
-  // Display settings must stay reachable even when location is denied —
-  // otherwise a student who needs bigger text is bounced away from the
-  // only page that can give it to them.
-  const isSettingsPage = pathname === '/settings';
 
   const versionData = data;
 
@@ -37,30 +29,18 @@ export default function LayoutShell({ children }) {
     if (isAuthenticated && isLoginPage) router.replace('/');
   }, [isAuthenticated, isLoginPage, router]);
 
-  // Location only matters for submitting, which already requires an account.
-  useEffect(() => {
-    if (!checking && isAuthenticated && !isLoginPage && status === 'denied' && !isLocationRequiredPage && !isSettingsPage) {
-      const perm = localStorage.getItem('location_permission');
-      if (perm !== 'deferred') {
-        router.replace('/location-required');
-      }
-    }
-  }, [checking, isAuthenticated, isLoginPage, status, isLocationRequiredPage, isSettingsPage, router]);
-
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
-  const needsLocationPrompt = !isLoginPage && !isLocationRequiredPage && isAuthenticated && (status === 'idle' || status === 'loading') && !checking;
-
-  const showChrome = !isLoginPage && !isLocationRequiredPage;
+  const showChrome = !isLoginPage;
 
   return (
     <PWAProvider>
       <BottomNavProvider>
       <div className="min-h-screen bg-grey-100 flex justify-center overflow-x-hidden">
         <div className="w-full max-w-[480px] min-h-screen bg-surface shadow-xl relative flex flex-col overflow-x-hidden">
-          {!isLoginPage && !isLocationRequiredPage && (
+          {!isLoginPage && (
             <header className="fixed top-0 w-full md:max-w-[480px] md:w-[480px] z-40 flex h-14 items-center justify-between border-b border-stroke-soft bg-surface px-4">
               <div className="flex items-center gap-2 min-w-0">
                 {versionData?.logo && (
@@ -132,18 +112,6 @@ export default function LayoutShell({ children }) {
           <main className={`flex-1 ${showChrome ? 'pt-14 pb-24' : ''}`}>{children}</main>
           {showChrome && <BottomNav />}
           <LoginSheet />
-          {needsLocationPrompt && (
-            <LocationPrompt
-              status={status}
-              onAllow={requestPermission}
-              onClose={() => {
-                if (typeof window !== 'undefined') {
-                  localStorage.setItem('location_permission', 'denied');
-                  router.replace('/location-required');
-                }
-              }}
-            />
-          )}
         </div>
       </div>
       </BottomNavProvider>

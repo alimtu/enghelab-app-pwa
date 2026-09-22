@@ -3,40 +3,53 @@ import http from '../axios';
 import { cacheForms, getCachedForms } from '../offline/idb';
 
 /**
- * Hook to fetch form data.
- * Caches successful responses in IndexedDB and falls back to cached data
- * when offline or when the network request fails.
+ * Fetches an Icms op and caches the response in IndexedDB, falling back to that
+ * copy when the request fails or the device is offline.
  *
- * @param {string} op - Operation name (e.g., 'm_forms')
- * @param {object} options - React Query options
+ * @param {string} op       Operation name (e.g. 'm_forms')
+ * @param {object} options  React Query options, plus an optional `params`
+ *                          object appended to the request. The cache key
+ *                          includes those params, so per-group form lists do
+ *                          not overwrite each other.
  */
 export default function useFormData(op, options = {}) {
+  const { params, ...queryOptions } = options;
+
+  // Stable across renders for the same values, and readable in DevTools.
+  const paramKey = params
+    ? Object.keys(params)
+        .sort()
+        .map((k) => `${k}=${params[k]}`)
+        .join('&')
+    : '';
+  const cacheKey = paramKey ? `${op}?${paramKey}` : op;
+
   return useQuery({
-    queryKey: ['form-data', op],
+    queryKey: ['form-data', op, paramKey],
     queryFn: async ({ signal }) => {
       const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
 
       if (isOffline) {
-        const cached = await getCachedForms(op);
+        const cached = await getCachedForms(cacheKey);
         if (cached) return cached;
         throw new Error('offline-no-cache');
       }
 
       try {
         const data = await http.get('/', {
-          params: { op },
+          params: { op, ...params },
           signal,
           _skipStatusCheck: op === 'm_version',
         });
-        cacheForms(op, data);
+        cacheForms(cacheKey, data);
         return data;
       } catch (err) {
-        const cached = await getCachedForms(op);
+        const cached = await getCachedForms(cacheKey);
         if (cached) return cached;
         throw err;
       }
     },
     enabled: !!op,
-    ...options,
+    ...queryOptions,
   });
 }

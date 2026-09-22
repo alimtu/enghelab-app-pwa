@@ -45,16 +45,23 @@ render a dynamic form without belonging to the forms feature.
 The dashboard and the bottom navigation both read the registry, so both pick
 the section up with no further edits.
 
+A section that deserves more than a card on the hub — the gallery's slider,
+the forms' quick-access row — renders its own block there instead: add its
+component to the hub page and its id to `OWN_BLOCK` in
+`src/app/(publicPages)/page.jsx`, and give it `area: null` if it should not
+appear as a card at all. The registry object stays, so the route, the header
+icon and `getSection()` keep working.
+
 ## Rules that keep it from drifting back
 
 - **The centre navigation button belongs to the app, not a feature.** It points
   at the hub. If one feature ever takes that slot, the app starts looking like
   that feature is all it does — which is exactly the drift this structure
   prevents.
-- **Only mark a section `kind: 'form'` if the form engine drives it.** That flag
-  is how form-specific behaviour (the offline send queue) knows what it owns.
-- **The send queue is form-specific.** It is reached from the form sections, not
-  from the global navigation, because it has no meaning for a non-form section.
+- **Only mark a section `kind: 'form'` if the form engine drives it.**
+- **There is no offline submit queue.** Forms are submitted live; when the
+  device is offline the app shows a blocking sheet with a retry button rather
+  than storing work that cannot be sent.
 - **Auth is per action, not per app.** Sections are browsable by default; use
   `requireAuth()` for actions and `<AuthGate>` for sections that genuinely need
   an account. See `src/lib/auth/AuthProvider.jsx`.

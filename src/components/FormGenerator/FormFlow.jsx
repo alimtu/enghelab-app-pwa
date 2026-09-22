@@ -9,17 +9,14 @@ import { Button } from '../ui/button';
 import FieldRenderer from './FieldRenderer';
 import RepeatableStep from './RepeatableStep';
 import buildFormSchema from '../../lib/utils/buildFormSchema';
-import { getSavedLocation } from '../../lib/hooks/useGeolocation';
 import useSubmitForm from '../../lib/hooks/useSubmitForm';
 import { useOnlineStatus } from '../../lib/hooks/usePWA';
-import { addPending } from '../../lib/offline/idb';
 import { useAuth } from '../../lib/auth/AuthProvider';
 
 export default function FormFlow({ form, onBack }) {
   const { requireAuth, isAuthenticated, ready: authReady } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
-  const [savedOffline, setSavedOffline] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const isOnline = useOnlineStatus();
   const steps = form.steps || [];
@@ -140,11 +137,11 @@ export default function FormFlow({ form, onBack }) {
       return;
     }
 
-    // Saving a draft offline is local work, so it stays open to everyone —
-    // the account is only needed to actually send. Online, guests get the
-    // login sheet and their answers are submitted once they sign in.
+    // Forms are submitted live; there is no store-and-forward queue. Without a
+    // connection the global offline sheet is already asking the student to
+    // reconnect, so refuse rather than pretend the answers were kept.
     if (!isOnline) {
-      sendAnswers();
+      toast.error('برای ثبت فرم به اینترنت نیاز است.');
       return;
     }
 
@@ -154,33 +151,11 @@ export default function FormFlow({ form, onBack }) {
   const sendAnswers = () => {
     handleSubmit(
       async (values) => {
-        const location = getSavedLocation();
-
-        if (!isOnline) {
-          try {
-            await addPending({
-              formId: form.formId,
-              formTitle: form.title,
-              values,
-              steps,
-              location: location || null,
-            });
-            toast.success('بدون اینترنت ذخیره شد. هنگام اتصال ارسال می‌شود.');
-            setSavedOffline(true);
-            setSubmitted(true);
-          } catch (err) {
-            console.error('[offline submit] failed to enqueue form:', err);
-            toast.error(err?.message ? `خطا در ذخیره فرم: ${err.message}` : 'خطا در ذخیره فرم');
-          }
-          return;
-        }
-
         submitForm.mutate(
-          { values, steps, formId: form.formId, location: location || null },
+          { values, steps, formId: form.formId },
           {
             onSuccess: () => {
               toast.success('فرم با موفقیت ثبت شد.');
-              setSavedOffline(false);
               setSubmitted(true);
             },
             onError: (err) => {
@@ -209,16 +184,14 @@ export default function FormFlow({ form, onBack }) {
   if (submitted) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100dvh-56px)] p-6 text-center">
-        <div className={`size-16 rounded-full flex items-center justify-center mb-5 ${savedOffline ? 'bg-warning-50' : 'bg-success-50'}`}>
-          <CircleCheckBigIcon className={`size-8 ${savedOffline ? 'text-warning-500' : 'text-success-500'}`} />
+        <div className="size-16 rounded-full flex items-center justify-center mb-5 bg-success-50">
+          <CircleCheckBigIcon className="size-8 text-success-500" />
         </div>
         <h2 className="text-base font-bold text-grey-800 mb-2">
-          {savedOffline ? 'بدون اینترنت ذخیره شد' : 'فرم ثبت شد'}
+          فرم ثبت شد
         </h2>
         <p className="text-sm text-grey-500 leading-relaxed mb-1">
-          {savedOffline
-            ? `فرم «${form.title}» به صف ارسال اضافه شد و هنگام اتصال به اینترنت ارسال می‌شود.`
-            : `فرم «${form.title}» با موفقیت ثبت شد.`}
+          {`فرم «${form.title}» با موفقیت ثبت شد.`}
         </p>
         <p className="text-xs text-grey-400 mb-6">
           بازگشت خودکار تا {countdown} ثانیه...
@@ -333,9 +306,7 @@ export default function FormFlow({ form, onBack }) {
             <Button type="button" onClick={doSubmit} className="flex-1 h-11" disabled={submitForm.isPending}>
               {submitForm.isPending
                 ? 'در حال ارسال...'
-                : !isOnline
-                  ? 'ذخیره برای ارسال بعدی'
-                  : !authReady || isAuthenticated ? 'ثبت' : 'ورود و ثبت فرم'}
+                : !authReady || isAuthenticated ? 'ثبت' : 'ورود و ثبت فرم'}
             </Button>
           )}
         </div>

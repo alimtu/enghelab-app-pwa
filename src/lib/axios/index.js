@@ -21,7 +21,11 @@ class HttpService {
       baseURL: config.api.baseURL,
       timeout: 15_000,
       headers: {
-        'Content-Type': 'application/json',
+        // `Accept` is CORS-safelisted, so requests stay "simple" and avoid a
+        // preflight. A default `Content-Type: application/json` would NOT be
+        // safelisted, and the backend answers OPTIONS with 405 — every call
+        // would fail. The one upload sets multipart/form-data itself, which is
+        // safelisted too.
         Accept: 'application/json',
       },
     });
@@ -51,7 +55,11 @@ class HttpService {
     // Request — attach auth token or finger when available
     this.#client.interceptors.request.use(req => {
       if (typeof window !== 'undefined') {
-        const finger = localStorage.getItem(AUTH_TOKEN_KEY);
+        const stored = localStorage.getItem(AUTH_TOKEN_KEY);
+        // A caller-supplied finger wins: the OTP exchange passes the
+        // pre-verification finger explicitly, and a stale stored session must
+        // never overwrite it.
+        const finger = req.params?.finger || stored;
         if (finger) {
           req.params = { ...req.params, finger, name: 'Icms', file: 'json' };
         } else {

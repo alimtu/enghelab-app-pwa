@@ -1,24 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { InboxIcon, LayoutGridIcon, ListIcon, LockKeyholeIcon } from 'lucide-react';
+import { LayoutGridIcon, ListIcon, LockKeyholeIcon } from 'lucide-react';
 
 import FormGenerator from '../../components/FormGenerator/FormGenerator';
 import { useHideBottomNav } from '../../components/AppComponents/BottomNav';
 import { Divider } from '../../components/ui/divider';
 import { useAuth } from '../../lib/auth/AuthProvider';
-import { usePendingCount } from '../../lib/hooks/usePendingSubmissions';
 import useFormLayout, { LAYOUT_GRID, LAYOUT_LIST } from './useFormLayout';
 
 /**
- * The body shared by the form-based sections (currently نظرسنجی and شکایت).
- * Everyone can see which forms exist; opening one requires an account.
+ * The body shared by every form category. Everyone can see which forms exist;
+ * opening one requires an account.
  */
 export default function FormsBrowser({ title, description, icon: Icon, forms, loginReason }) {
-  const router = useRouter();
   const { isAuthenticated, ready, requireAuth } = useAuth();
-  const pendingCount = usePendingCount();
   const { layout, setLayout } = useFormLayout();
   const [activeForm, setActiveForm] = useState(null);
 
@@ -39,31 +35,14 @@ export default function FormsBrowser({ title, description, icon: Icon, forms, lo
     <div>
       {!activeForm && (
         <div className="space-y-4 p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 items-start gap-3">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-100 text-primary-600">
-                <Icon className="size-5" strokeWidth={1.75} />
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-base font-bold text-grey-800">{title}</h1>
-                <p className="mt-0.5 text-xs leading-relaxed text-grey-500">{description}</p>
-              </div>
+          <div className="flex items-start gap-3">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-100 text-primary-600">
+              <Icon className="size-5" strokeWidth={1.75} />
             </div>
-
-            {/* The offline queue only ever holds forms, so it lives here. */}
-            <button
-              type="button"
-              onClick={() => router.push('/pending')}
-              aria-label="صف ارسال"
-              className="relative flex size-9 shrink-0 items-center justify-center rounded-lg border border-stroke-soft text-grey-500 transition-colors hover:border-primary-200 hover:text-primary-600"
-            >
-              <InboxIcon className="size-4.5" />
-              {pendingCount > 0 && (
-                <span className="absolute -left-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-danger-500 px-1 text-[9px] font-bold text-white">
-                  {pendingCount}
-                </span>
-              )}
-            </button>
+            <div className="min-w-0">
+              <h1 className="text-base font-bold text-grey-800">{title}</h1>
+              <p className="mt-0.5 text-xs leading-relaxed text-grey-500">{description}</p>
+            </div>
           </div>
 
           {locked && (

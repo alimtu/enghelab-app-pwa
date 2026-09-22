@@ -1,11 +1,9 @@
 import {
   HomeIcon,
   ClipboardListIcon,
-  MessageSquareWarningIcon,
   ImagesIcon,
   UserRoundIcon,
   ChartColumnIcon,
-  InboxIcon,
   SlidersHorizontalIcon,
 } from 'lucide-react';
 
@@ -13,9 +11,9 @@ import {
  * The one registry of what this app contains.
  *
  * This is a university app, not a forms app. Forms happen to be the first
- * capability built (نظرسنجی and شکایت), but sections unrelated to forms —
- * news, class schedules, dining, library, transport — are expected to sit
- * beside them as equals. Adding one means adding an object here, not editing
+ * capability built, and their categories come from the backend rather than
+ * from this file. Sections unrelated to forms — news, class schedules, dining,
+ * library, transport — are expected to sit beside them as equals. Adding one means adding an object here, not editing
  * the navigation and the dashboard by hand.
  *
  * Fields:
@@ -54,37 +52,18 @@ export const SECTIONS = [
   },
 
   // ── Form-based sections ────────────────────────────────────────────────
+  // Categories come from the backend (`m_group`), so the app gains and loses
+  // form areas without a code change.
   {
-    id: 'survey',
-    title: 'نظرسنجی‌ها',
-    description: 'دروس، رویدادها و خدمات دانشگاه',
-    href: '/survey',
+    id: 'forms',
+    title: 'فرم‌ها',
+    description: 'دسته‌بندی فرم‌ها و درخواست‌ها',
+    href: '/forms',
     icon: ClipboardListIcon,
     area: AREA_FORMS,
     kind: 'form',
     nav: { slot: 'side' },
-  },
-  {
-    id: 'complaints',
-    title: 'ثبت شکایت',
-    description: 'مشکلات آموزشی و رفاهی',
-    href: '/complaints',
-    icon: MessageSquareWarningIcon,
-    area: AREA_FORMS,
-    kind: 'form',
-    nav: { slot: 'side' },
-  },
-  {
-    id: 'pending',
-    title: 'صف ارسال',
-    description: 'فرم‌های ذخیره‌شده در انتظار ارسال',
-    href: '/pending',
-    icon: InboxIcon,
-    area: AREA_FORMS,
-    kind: 'form',
-    // Reached from the form sections themselves, not the dashboard or nav.
-    nav: false,
-    hidden: true,
+    requiresAuth: true,
   },
 
   // ── Sections that have nothing to do with forms ────────────────────────
@@ -94,8 +73,10 @@ export const SECTIONS = [
     description: 'تصاویر و اطلاعیه‌های دانشگاه',
     href: '/gallery',
     icon: ImagesIcon,
-    area: AREA_CAMPUS,
-    nav: { slot: 'side' },
+    // Lives on the hub itself as a slider rather than as a card or a nav tab.
+    // The route stays for "مشاهده همه" and the header icon.
+    area: null,
+    nav: false,
   },
 
   // ── Account ────────────────────────────────────────────────────────────

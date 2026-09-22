@@ -34,7 +34,7 @@ export default function LoginSheet() {
           <div className="relative flex flex-col items-center gap-3 pb-6 pt-2 text-center">
             <DrawerClose
               aria-label="بستن"
-              className="absolute left-0 top-0 flex size-8 items-center justify-center rounded-full text-grey-400 transition-colors hover:bg-grey-50 hover:text-grey-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-200"
+              className="absolute left-0 top-0 flex size-8 items-center justify-center rounded-full text-grey-400 transition-colors hover:bg-grey-50 hover:text-grey-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
             >
               <X className="size-4.5" />
             </DrawerClose>

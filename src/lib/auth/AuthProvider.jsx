@@ -14,7 +14,7 @@ import { usePathname } from 'next/navigation';
 
 import { AUTH_TOKEN_KEY } from './constants';
 import { AUTH_EXPIRED_EVENT } from './events';
-import { clearCachedForms, notifyPendingChange } from '../offline/idb';
+import { clearCachedForms } from '../offline/idb';
 
 const AuthContext = createContext(null);
 
@@ -96,8 +96,6 @@ export function AuthProvider({ children }) {
 
       // Gated queries failed while signed out; let them fetch again.
       queryClient.invalidateQueries();
-      // Which drafts are visible depends on who is signed in.
-      notifyPendingChange();
 
       const resume = pendingAction.current;
       pendingAction.current = null;
@@ -113,7 +111,6 @@ export function AuthProvider({ children }) {
     // Shared devices are the norm on campus — don't leave this student's
     // cached answers behind for the next person.
     clearCachedForms();
-    notifyPendingChange();
   }, [queryClient]);
 
   /**

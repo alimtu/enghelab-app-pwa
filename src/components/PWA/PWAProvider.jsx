@@ -1,14 +1,15 @@
 'use client';
 
 import { useCallback, useEffect } from 'react';
-import { useServiceWorker, useOnlineStatus, useInstallPrompt } from '@/lib/hooks/usePWA';
-import OfflineIndicator from './OfflineIndicator';
+import { useServiceWorker, useInstallPrompt } from '@/lib/hooks/usePWA';
+import useConnectivity from '@/lib/hooks/useConnectivity';
+import OfflineSheet from './OfflineSheet';
 import InstallPrompt from './InstallPrompt';
 import UpdateBanner from './UpdateBanner';
 
 export default function PWAProvider({ children }) {
   const { updateAvailable, applyUpdate } = useServiceWorker();
-  const isOnline = useOnlineStatus();
+  const { online, recheck } = useConnectivity();
   const { canInstall, install } = useInstallPrompt();
 
   useEffect(() => {
@@ -28,11 +29,13 @@ export default function PWAProvider({ children }) {
     <>
       {children}
 
-      {!isOnline && <OfflineIndicator />}
+      {/* Blocks the app while offline: forms are submitted live, so there is
+          nothing useful to do without a connection. */}
+      <OfflineSheet open={!online} onRecheck={recheck} />
 
-      {updateAvailable && <UpdateBanner onUpdate={applyUpdate} />}
+      {online && updateAvailable && <UpdateBanner onUpdate={applyUpdate} />}
 
-      {canInstall && !updateAvailable && <InstallPrompt onInstall={handleInstall} />}
+      {online && canInstall && !updateAvailable && <InstallPrompt onInstall={handleInstall} />}
     </>
   );
 }

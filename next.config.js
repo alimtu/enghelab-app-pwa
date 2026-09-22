@@ -25,18 +25,25 @@ const nextConfig = {
     ];
   },
   reactStrictMode: true,
+  // Pin file tracing to this project; the server has a stray lockfile in the
+  // parent dir, which made Next infer the wrong workspace root.
+  outputFileTracingRoot: __dirname,
   experimental: {
     staleTimes: {
       dynamic: 0,
-      static: 0,
+      // Next 16 requires static >= 30; 30 is the lowest allowed.
+      static: 30,
     },
-    turbo: {
-      resolveAlias: {
-        underscore: 'lodash',
-        '@': './src',
-      },
-      resolveExtensions: ['.mdx', '.tsx', '.ts', '.jsx', '.js', '.json'],
-    },
+  },
+  // Was `experimental.turbo`, which Next 16 rejects. Its former resolveAlias /
+  // resolveExtensions were never actually in effect (the key was ignored), so
+  // they are dropped rather than promoted: `@/*` already comes from jsconfig.json,
+  // and resolveExtensions would override Next's defaults and drop .mjs/.cjs.
+  turbopack: {
+    // Pin Turbopack's root. A stray package.json/package-lock.json in the home
+    // dir makes root inference walk up past this project, which breaks bare
+    // imports like `@import 'tailwindcss'` in src/app/globals.css.
+    root: __dirname,
   },
   images: {
     remotePatterns: [

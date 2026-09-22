@@ -1,20 +1,21 @@
 import * as React from 'react';
 
 import { cn } from '@/lib/utils/index';
+import { toEnglishDigits } from '@/lib/utils/digits';
 
-function toEnglishDigits(str: string): string {
-  return str
-    .replace(/[۰-۹]/g, (ch) => String(ch.charCodeAt(0) - 0x06f0))
-    .replace(/[٠-٩]/g, (ch) => String(ch.charCodeAt(0) - 0x0660));
-}
+type InputProps = React.ComponentProps<'input'> & {
+  /** Fold Persian/Arabic digits to ASCII as the user types. Off for secrets,
+   *  whose characters must reach the server exactly as entered. */
+  normalizeDigits?: boolean;
+};
 
-function Input({ className, type, onChange, ...props }: React.ComponentProps<'input'>) {
+function Input({ className, type, onChange, normalizeDigits = true, ...props }: InputProps) {
   const handleChange = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      e.target.value = toEnglishDigits(e.target.value);
+      if (normalizeDigits) e.target.value = toEnglishDigits(e.target.value);
       onChange?.(e);
     },
-    [onChange],
+    [onChange, normalizeDigits],
   );
 
   return (
